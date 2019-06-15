@@ -1,0 +1,39 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.redhat.demos.reactive</groupId>
+    <artifactId>reactive-coffeeshop-demo</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <packaging>pom</packaging>
+
+  <properties>
+    <vertx.version>3.6.3</vertx.version>
+    <main.verticle>io.vertx.starter.MainVerticle</main.verticle>
+    <!-- Testing stuff -->
+    <junit-jupiter.version>5.1.0</junit-jupiter.version>
+    <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
+    <junit-platform-surefire-provider.version>1.0.1</junit-platform-surefire-provider.version>
+    <assertj-core.version>3.8.0</assertj-core.version>
+  </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-stack-depchain</artifactId>
+        <version>${vertx.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+    <modules>
+        <module>vertx-barista-http</module>
+        <module>vertx-coffeeshop-service</module>
+        <module>vertx-barista-kafka</module>
+    </modules>
+
+</project>
