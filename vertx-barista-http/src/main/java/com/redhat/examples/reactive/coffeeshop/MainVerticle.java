@@ -1,24 +1,44 @@
 package com.redhat.examples.reactive.coffeeshop;
 
-import io.vertx.core.AbstractVerticle;
+
+import io.reactivex.Maybe;
 import io.vertx.core.Future;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.JWTAuthHandler;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.http.HttpServer;
+import io.vertx.reactivex.core.http.HttpServerResponse;
+import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
 public class MainVerticle extends AbstractVerticle {
 
+  private static final Logger LOG = LoggerFactory.getLogger(MainVerticle.class);
+
   private String name;
 
-  Router baseRouter = Router.router(vertx);
-
   @Override
-  public void start(Future<Void> startFuture) {
+  public void start(final Future<Void> startFuture) {
+    this.createHttpServer()
+      .doOnError(startFuture::fail)
+      .subscribe(v -> startFuture.complete());
+  }
 
-    // Get the name for our Barista
-    name = config().getString("name");
+  private void baristaHandler(RoutingContext routingContext) {
+    // fail for now
+    routingContext.response().setStatusCode(500);
+  }
+
+  /*
+   * Create an HttpServer with the appropriate routes
+   */
+  private Maybe<HttpServer> createHttpServer() {
+
+    this.name = config().getString("name", "Godzilla");
+
+    // Create an instance of Router
+    Router baseRouter = Router.router(vertx);
 
     // Handle the root url
     baseRouter.route("/").handler(routingContext -> {
@@ -27,22 +47,10 @@ public class MainVerticle extends AbstractVerticle {
     });
 
     // Handle the barista functions
-    baseRouter.route("/barista").handler(this::baristaHandler);
+    baseRouter.post("/barista").handler(this::baristaHandler);
 
-    vertx.createHttpServer()
-      .requestHandler(baseRouter::accept)
-      .listen(8080, result -> {
-        if (result.succeeded()) {
-          startFuture.complete();
-        } else {
-          startFuture.fail(result.cause());
-        }
-      });
-  }
-
-  private void baristaHandler(RoutingContext routingContext) {
-    // fail for now
-    routingContext.response().setStatusCode(500);
+    return vertx.createHttpServer()
+      .requestHandler(baseRouter::accept).rxListen().toMaybe();
   }
 
 }

@@ -32,7 +32,7 @@ public class MainVerticleTest {
 
       deploymentCheckpoint.flag();
 
-      webClient.get(8080, "localhost", "/")
+      webClient.get(80, "localhost", "/")
         .as(BodyCodec.string())
         .send(tc.succeeding(resp -> {
           tc.verify(() -> {

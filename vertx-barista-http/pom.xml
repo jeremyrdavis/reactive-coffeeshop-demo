@@ -13,6 +13,10 @@
   </parent>
   <artifactId>vertx-barista-http</artifactId>
 
+  <properties>
+    <main.verticle>com.redhat.examples.reactive.coffeeshop.MainVerticle</main.verticle>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>io.vertx</groupId>
@@ -21,6 +25,10 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-rx-java2</artifactId>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
