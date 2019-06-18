@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 public class HttpBaristaVerticle extends AbstractVerticle{
 
-  private static final Logger LOG = LoggerFactory.getLogger(MainVerticle.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HttpBaristaVerticle.class);
 
   private String name;
 
@@ -58,25 +58,19 @@ public class HttpBaristaVerticle extends AbstractVerticle{
       .requestHandler(baseRouter::accept).rxListen().toMaybe();
   }
 
-  private Observable<Beverage> makeIt(Order order) {
-    return Single.just(new Beverage(order, name)).toObservable();
-  }
-
   /*
     Handler for posting an order
    */
   private void orderHandler(RoutingContext routingContext) {
 
-    LOG.debug("orderHandler");
-    LOG.debug(routingContext.getBody());
-    System.out.println("body: " + routingContext.getBodyAsString());
+    LOG.debug("orderHandler called with " + routingContext.getBody());
+
     JsonObject postBody = routingContext.getBodyAsJson();
 
     Observable.zip(
       makeIt(new Order(postBody.getString("product"), postBody.getString("name"), postBody.getString("orderId").toString())),
       Observable.interval(random.nextInt(5) * 1000, TimeUnit.MILLISECONDS),
       (obs, timer) -> obs).doOnNext(beverage -> {
-        System.out.println(beverage.toString());
         HttpServerResponse response = routingContext.response();
         response.putHeader("Content-Type", "application/json").end(Json.encode(beverage));
       }
@@ -90,6 +84,10 @@ public class HttpBaristaVerticle extends AbstractVerticle{
 
     HttpServerResponse response = routingContext.response();
     response.putHeader("content-type", "text/plain").end("Welcome to the Reactive Coffeeshop, I'm " + name);
+  }
+
+  private Observable<Beverage> makeIt(Order order) {
+    return Single.just(new Beverage(order, name)).toObservable();
   }
 
 }
