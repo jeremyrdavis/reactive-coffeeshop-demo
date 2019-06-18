@@ -17,9 +17,12 @@ import io.vertx.reactivex.core.http.HttpServer;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.handler.BodyHandler;
 
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+
+import static io.vertx.ext.web.handler.BodyHandler.*;
 
 public class MainVerticle extends AbstractVerticle {
 
@@ -69,6 +72,7 @@ public class MainVerticle extends AbstractVerticle {
     });
 
     // Handle the barista functions
+    baseRouter.route("/barista*").handler(BodyHandler.create());
     baseRouter.get("/barista").handler(this::baristaHandler);
     baseRouter.post("/barista").handler(this::orderHandler);
 
@@ -87,22 +91,18 @@ public class MainVerticle extends AbstractVerticle {
 
     LOG.debug("orderHandler");
     LOG.debug(routingContext.getBody());
-    System.out.println(routingContext.getBody());
+    System.out.println("body: " + routingContext.getBodyAsString());
+    JsonObject postBody = routingContext.getBodyAsJson();
 
     Observable.zip(
-//      makeIt(Json.decodeValue(routingContext.getBodyAsString(), Order.class)),
-      makeIt(new Order("Latte", name, "1234567")),
+      makeIt(new Order(postBody.getString("product"), postBody.getString("name"), postBody.getString("orderId").toString())),
       Observable.interval(random.nextInt(5) * 1000, TimeUnit.MILLISECONDS),
       (obs, timer) -> obs).doOnNext(beverage -> {
-      System.out.println(beverage);
+        System.out.println(beverage.toString());
         HttpServerResponse response = routingContext.response();
-        response.putHeader("content-type", "application/json").end(Json.encodePrettily(beverage));
+        response.putHeader("Content-Type", "application/json").end(Json.encode(beverage));
       }
     ).subscribe();
-/*
-    HttpServerResponse response = routingContext.response();
-    response.putHeader("content-type", "text/plain").end("Welcome to the Reactive Coffeeshop, I'm " + name);
-*/
   }
 
   /*
