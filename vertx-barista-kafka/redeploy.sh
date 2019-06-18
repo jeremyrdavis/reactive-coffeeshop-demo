@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 export LAUNCHER="io.vertx.core.Launcher"
-export VERTICLE="io.vertx.starter.MainVerticle"
+export VERTICLE="com.redhat.examples.reactive.coffeeshop.MainVerticle"
 export CMD="mvn compile"
 export VERTX_CMD="run"
 
