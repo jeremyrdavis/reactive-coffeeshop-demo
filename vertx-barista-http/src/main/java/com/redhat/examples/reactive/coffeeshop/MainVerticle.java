@@ -8,20 +8,10 @@ import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.AbstractVerticle;
 
-import java.util.Random;
-
 public class MainVerticle extends AbstractVerticle {
-
-  private static final Logger LOG = LoggerFactory.getLogger(MainVerticle.class);
-
-  private String name;
-
-  private Random random = new Random();
 
   @Override
   public void start(final Future<Void> startFuture) {
@@ -53,8 +43,5 @@ public class MainVerticle extends AbstractVerticle {
     ConfigRetrieverOptions options = new ConfigRetrieverOptions().addStore(fileStore);
     ConfigRetriever retriever = ConfigRetriever.create(vertx, options);
     return retriever.rxGetConfig().toMaybe();
-
   }
-
-
 }
