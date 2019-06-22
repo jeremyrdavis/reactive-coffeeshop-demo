@@ -69,8 +69,7 @@ public class KafkaBaristaVerticle extends AbstractVerticle {
       });
       kafkaConsumer = KafkaConsumer.create(vertx, kafkaConfig);
       kafkaConsumer.handler(record -> {
-        System.out.println("Order Received key=" + record.key() + ",value=" + record.value() +
-          ",partition=" + record.partition() + ",offset=" + record.offset());
+        System.out.println("Order Received " + Json.encodePrettily(record));
       });
       kafkaConsumer.subscribe(ORDER_TOPIC, ar ->{
         if (ar.succeeded()) {
