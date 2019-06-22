@@ -15,15 +15,11 @@ public class MainVerticle extends AbstractVerticle {
   @Override
   public void start(final Future<Void> startFuture) {
 
-//    Single.just(config().getJsonObject("kafkaConfig"))
     this.loadConfig()
       .flatMap(this::configureDeployment)
       .flatMap(this::deployBarista)
       .doOnError(startFuture::fail)
       .subscribe(v -> startFuture.complete());
-//      .subscribe(v -> {
-//        System.out.println(v.getConfig());
-//      });
   }
 
   private Maybe<String> deployBarista(DeploymentOptions deploymentOptions) {

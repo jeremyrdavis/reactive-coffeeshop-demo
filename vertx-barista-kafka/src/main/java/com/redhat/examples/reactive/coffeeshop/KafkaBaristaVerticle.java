@@ -1,11 +1,10 @@
 package com.redhat.examples.reactive.coffeeshop;
 
 import io.reactivex.Completable;
-import io.reactivex.Maybe;
 import io.reactivex.Observable;
-import io.reactivex.Single;
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonObject;
+import io.vertx.core.Handler;
+import io.vertx.core.json.Json;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.AbstractVerticle;
@@ -18,6 +17,8 @@ import java.util.Random;
 public class KafkaBaristaVerticle extends AbstractVerticle {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaBaristaVerticle.class);
+
+  private static final String ORDER_TOPIC = "orders";
 
   private KafkaConsumer<String, String> kafkaConsumer;
 
@@ -60,11 +61,19 @@ public class KafkaBaristaVerticle extends AbstractVerticle {
 
   private Observable<Void> initKafkaConsumer() {
 
-    Map<String, Object> kafkaConf = config().getJsonObject("kafkaConfig").getMap();
-    Map<String, String> kafkaConfig = new HashMap<String, String>(kafkaConf.size());
-    kafkaConf.keySet().forEach(k -> {
-      kafkaConfig.put(k, kafkaConf.get(k).toString());
-    });
-    return Completable.fromRunnable(() -> {kafkaConsumer = KafkaConsumer.create(vertx, kafkaConfig);}).toObservable();
+    return Completable.fromRunnable(() -> {
+      Map<String, Object> kafkaConf = config().getJsonObject("kafkaConfig").getMap();
+      Map<String, String> kafkaConfig = new HashMap<String, String>(kafkaConf.size());
+      kafkaConf.keySet().forEach(k -> {
+        kafkaConfig.put(k, kafkaConf.get(k).toString());
+      });
+      kafkaConsumer = KafkaConsumer.create(vertx, kafkaConfig);
+      kafkaConsumer.subscribe(ORDER_TOPIC);
+      kafkaConsumer.handler(record -> {
+        System.out.println("Order Received key=" + record.key() + ",value=" + record.value() +
+          ",partition=" + record.partition() + ",offset=" + record.offset());
+      });
+    }).toObservable();
   }
+
 }
