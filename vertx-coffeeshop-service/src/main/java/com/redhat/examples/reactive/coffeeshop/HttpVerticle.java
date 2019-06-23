@@ -9,6 +9,7 @@ import io.vertx.core.json.Json;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.RecordMetadata;
@@ -21,7 +22,7 @@ public class HttpVerticle extends AbstractVerticle {
 
   private KafkaProducer<String, String> kafkaProducer;
 
-  private Future<Void> testKafkaSendFuture;
+  private KafkaConsumer<String, String> kafkaConsumer;
 
   @Override
   public void start(Future<Void> startFuture) {
@@ -50,7 +51,7 @@ public class HttpVerticle extends AbstractVerticle {
 
     vertx.createHttpServer()
       .requestHandler(baseRouter::accept)
-      .listen(8081, result -> {
+      .listen(8080, result -> {
         if (result.succeeded()) {
           initHttpServerFuture.complete();
         } else {
