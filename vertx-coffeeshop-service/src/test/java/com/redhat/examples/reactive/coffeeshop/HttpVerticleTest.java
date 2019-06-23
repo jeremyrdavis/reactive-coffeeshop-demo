@@ -34,7 +34,7 @@ public class HttpVerticleTest {
 
       deploymentCheckpoint.flag();
 
-      webClient.post(8080, "localhost", "/messaging")
+      webClient.post(8081, "localhost", "/messaging")
         .sendForm(form, tc.succeeding(resp -> {
           tc.verify(() -> {
             assertThat(resp.statusCode()).isEqualTo(200);
