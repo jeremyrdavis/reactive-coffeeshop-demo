@@ -32,13 +32,7 @@ public class HttpVerticle extends AbstractVerticle {
       initKafkaProducer(),
       initHttpServer()).setHandler(ar -> {
       if (ar.succeeded()) {
-        testKafkaSend().setHandler(handler -> {
-          if (handler.failed()) {
-            startFuture.fail(handler.cause());
-          }else{
-            startFuture.complete();
-          }
-        });
+        startFuture.complete();
       }else{
         startFuture.fail(ar.cause());
       }
@@ -70,8 +64,8 @@ public class HttpVerticle extends AbstractVerticle {
 
   private void messagingHandler(RoutingContext routingContext) {
     Order order = new Order(
-      routingContext.request().formAttributes().get("name"),
-      routingContext.request().formAttributes().get("beverage"));
+      routingContext.request().formAttributes().get("beverage"),
+      routingContext.request().formAttributes().get("name"));
     order.setOrderId(UUID.randomUUID().toString());
 
     System.out.println(Json.encodePrettily(order));
@@ -83,17 +77,11 @@ public class HttpVerticle extends AbstractVerticle {
         HttpServerResponse response = routingContext.response();
         response.putHeader("content-type", "application/json").end(Json.encodePrettily(order));
         RecordMetadata recordMetadata = ar.result();
-        System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.getTopic() +
-          ", partition=" + recordMetadata.getPartition() +
-          ", offset=" + recordMetadata.getOffset());
       }else{
         HttpServerResponse response = routingContext.response();
         response.putHeader("content-type", "application/json").end(new String("{ \"error\":\"" + ar.cause() + "\"}"));
       }
     });
-
-//    HttpServerResponse response = routingContext.response();
-//    response.putHeader("content-type", "application/json").end(Json.encodePrettily(order));
   }
 
   private void rootHandler(RoutingContext routingContext) {
@@ -109,10 +97,6 @@ public class HttpVerticle extends AbstractVerticle {
     config.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     config.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     config.put("acks", "1");
-/*
-    config.put("auto.commit", "false");
-    config.put("enable.auto.commit", "false");
-*/
 
     try {
       kafkaProducer = KafkaProducer.create(vertx, config);
@@ -124,26 +108,4 @@ public class HttpVerticle extends AbstractVerticle {
     return initKafkaProducerFuture;
   }
 
-  private Future<Void> testKafkaSend() {
-
-    testKafkaSendFuture = Future.future();
-
-    KafkaProducerRecord<String, String> record =
-      KafkaProducerRecord.create("queue",
-        new JsonObject()
-          .put("id", 1)
-          .put("name", "jeremy")
-          .put("product", "latte").encodePrettily());
-
-    kafkaProducer.write(record, ar->{
-      if (ar.failed()) {
-        testKafkaSendFuture.fail(ar.cause());
-      }else{
-        testKafkaSendFuture.complete();
-      }
-    });
-
-
-    return testKafkaSendFuture;
-  }
 }
