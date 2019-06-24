@@ -65,10 +65,11 @@ public class HttpBaristaVerticle extends AbstractVerticle{
 
     LOG.debug("orderHandler called with " + routingContext.getBody());
 
-    JsonObject postBody = routingContext.getBodyAsJson();
-
     Observable.zip(
-      makeIt(new Order(postBody.getString("product"), postBody.getString("name"), postBody.getString("orderId").toString())),
+      makeIt(
+        new Order(
+          routingContext.request().formAttributes().get("product"),
+          routingContext.request().formAttributes().get("name"))),
       Observable.interval(random.nextInt(5) * 1000, TimeUnit.MILLISECONDS),
       (obs, timer) -> obs).doOnNext(beverage -> {
         HttpServerResponse response = routingContext.response();
