@@ -24,6 +24,7 @@ public class OrderTest {
     WebClient webClient = WebClient.create(vertx);
     Checkpoint deploymentCheckpoint = tc.checkpoint();
     Checkpoint requestCheckpoint = tc.checkpoint();
+
     MultiMap form = MultiMap.caseInsensitiveMultiMap();
     form.set("name", "Buffy");
     form.set("beverage", "Venti Dark Roast");

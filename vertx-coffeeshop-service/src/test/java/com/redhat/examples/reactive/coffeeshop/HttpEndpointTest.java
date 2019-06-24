@@ -29,6 +29,9 @@ public class HttpEndpointTest {
       .put("name", "Buffy")
       .put("product", "Venti Dark Roast");
 
+    // deploy our mock verticle
+    vertx.deployVerticle(MockHttpBaristaVerticle.class.getName());
+
     vertx.deployVerticle(new MainVerticle(), tc.succeeding(id -> {
 
       // verify verticle is deployed

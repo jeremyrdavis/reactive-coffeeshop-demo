@@ -4,10 +4,13 @@ import com.redhat.examples.reactive.coffeeshop.model.Order;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
@@ -24,10 +27,13 @@ public class HttpVerticle extends AbstractVerticle {
 
   private KafkaConsumer<String, String> kafkaConsumer;
 
+  WebClient webClient;
+
   @Override
   public void start(Future<Void> startFuture) {
 
     CompositeFuture.all(
+      initWebClient(),
       initKafkaProducer(),
       initHttpServer()).setHandler(ar -> {
       if (ar.succeeded()) {
@@ -39,6 +45,17 @@ public class HttpVerticle extends AbstractVerticle {
 
   }
 
+  private Future<Void> initWebClient() {
+    Future<Void> initWebClientFuture = Future.future();
+    try {
+      webClient = WebClient.create(vertx);
+      initWebClientFuture.complete();
+    } catch (Exception e) {
+      initWebClientFuture.fail(e.getCause());
+    }
+    return initWebClientFuture;
+  }
+
   private Future<Void> initHttpServer() {
 
     Future<Void> initHttpServerFuture = Future.future();
@@ -48,6 +65,8 @@ public class HttpVerticle extends AbstractVerticle {
     baseRouter.get("/").handler(this::rootHandler);
     baseRouter.route("/messaging").handler(BodyHandler.create());
     baseRouter.post("/messaging").handler(this::messagingHandler);
+    baseRouter.route("/http").handler(BodyHandler.create());
+    baseRouter.post("/http").handler(this::httpHandler);
     baseRouter.get("/queue").handler(this::queueHandler);
 
     vertx.createHttpServer()
@@ -60,6 +79,37 @@ public class HttpVerticle extends AbstractVerticle {
         }
       });
     return initHttpServerFuture;
+  }
+
+  /*
+    1. Get Json from the request
+    2. Create a form to send to the http barista
+    3. Call the http barista with the form
+    4. Translate the response into Json
+   */
+  private void httpHandler(RoutingContext routingContext) {
+    JsonObject requestJson = routingContext.getBodyAsJson();
+
+    System.out.println(requestJson.getString("name"));
+    System.out.println(requestJson.getString("product"));
+
+    MultiMap form = MultiMap.caseInsensitiveMultiMap();
+    form.set("name", requestJson.getString("name"));
+    form.set("product", requestJson.getString("product"));
+
+    webClient.post(8082, "localhost", "/barista")
+      .putHeader("Accept", "application/json")
+      .sendForm(form, ar -> {
+        if (ar.succeeded()) {
+          HttpServerResponse response = routingContext.response();
+          response.setStatusCode(200);
+          response.putHeader("Content-type", "application/json").end(ar.result().bodyAsJsonObject().encode());
+        }else{
+          HttpServerResponse response = routingContext.response();
+          response.setStatusCode(500);
+          response.end();
+        }
+      });
   }
 
   private void queueHandler(RoutingContext routingContext) {
