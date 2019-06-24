@@ -48,6 +48,7 @@ public class HttpVerticle extends AbstractVerticle {
     baseRouter.get("/").handler(this::rootHandler);
     baseRouter.route("/messaging").handler(BodyHandler.create());
     baseRouter.post("/messaging").handler(this::messagingHandler);
+    baseRouter.get("/queue").handler(this::queueHandler);
 
     vertx.createHttpServer()
       .requestHandler(baseRouter::accept)
@@ -59,6 +60,9 @@ public class HttpVerticle extends AbstractVerticle {
         }
       });
     return initHttpServerFuture;
+  }
+
+  private void queueHandler(RoutingContext routingContext) {
   }
 
   private void messagingHandler(RoutingContext routingContext) {

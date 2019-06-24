@@ -20,7 +20,6 @@ public class QueueEndpointTest {
 
     WebClient webClient = WebClient.create(vertx);
     Checkpoint deploymentCheckpoint = tc.checkpoint();
-    Checkpoint requestCheckpoint = tc.checkpoint();
 
     vertx.deployVerticle(new MainVerticle(), tc.succeeding(id -> {
 
