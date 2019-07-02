@@ -12,6 +12,8 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.sockjs.SockJSHandler;
+import io.vertx.ext.web.handler.sockjs.SockJSHandlerOptions;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
@@ -21,6 +23,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * /http - POST relays an Order to the barista-http
+ * /async - POST relays an Order to the
+ */
 public class HttpVerticle extends AbstractVerticle {
 
   private KafkaProducer<String, String> kafkaProducer;
@@ -67,7 +73,16 @@ public class HttpVerticle extends AbstractVerticle {
     baseRouter.post("/messaging").handler(this::messagingHandler);
     baseRouter.route("/http").handler(BodyHandler.create());
     baseRouter.post("/http").handler(this::httpHandler);
-    baseRouter.get("/queue").handler(this::queueHandler);
+
+    // initialize a SockJSHandler
+    SockJSHandlerOptions options = new SockJSHandlerOptions().setHeartbeatInterval(2000);
+    SockJSHandler sockJSHandler = SockJSHandler.create(vertx, options);
+    sockJSHandler.socketHandler(sockJSSocket -> {
+     // Just echo the data back
+      sockJSSocket.handler(sockJSSocket::write);
+    });
+    // attache the SockJSHandler to the /queue route
+    baseRouter.get("/queue").handler(sockJSHandler);
 
     vertx.createHttpServer()
       .requestHandler(baseRouter::accept)
