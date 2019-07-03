@@ -5,19 +5,23 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
+import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.StaticHandler;
+import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
-import io.vertx.ext.web.handler.sockjs.SockJSHandlerOptions;
+import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
-import io.vertx.kafka.client.producer.RecordMetadata;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +32,8 @@ import java.util.UUID;
  * /async - POST relays an Order to the
  */
 public class HttpVerticle extends AbstractVerticle {
+
+  private static final Logger logger = LoggerFactory.getLogger(HttpVerticle.class);
 
   private KafkaProducer<String, String> kafkaProducer;
 
@@ -41,6 +47,7 @@ public class HttpVerticle extends AbstractVerticle {
     CompositeFuture.all(
       initWebClient(),
       initKafkaProducer(),
+      initKafkaConsumer(),
       initHttpServer()).setHandler(ar -> {
       if (ar.succeeded()) {
         startFuture.complete();
@@ -68,21 +75,38 @@ public class HttpVerticle extends AbstractVerticle {
 
     // initialize the router
     Router baseRouter = Router.router(vertx);
-    baseRouter.get("/").handler(this::rootHandler);
+//    baseRouter.get("/").handler(this::rootHandler);
+//    baseRouter.get("/").handler(StaticHandler.create("webroot"));
+    baseRouter.get("/*").handler(StaticHandler.create());
+//    baseRouter.get("/webroot").handler(StaticHandler.create());
     baseRouter.route("/messaging").handler(BodyHandler.create());
     baseRouter.post("/messaging").handler(this::messagingHandler);
     baseRouter.route("/http").handler(BodyHandler.create());
     baseRouter.post("/http").handler(this::httpHandler);
 
+    EventBus eventBus = vertx.eventBus();
+    BridgeOptions options = new BridgeOptions();
+    baseRouter.route("/queue/*").handler(SockJSHandler.create(vertx).bridge(options));
+
+/*
     // initialize a SockJSHandler
     SockJSHandlerOptions options = new SockJSHandlerOptions().setHeartbeatInterval(2000);
-    SockJSHandler sockJSHandler = SockJSHandler.create(vertx, options);
+    SockJSHandler sockJSHandler = SockJSHandler
+      .create(vertx, options)
+      .bridge(new BridgeOptions(), event -> {
+        if (event.type() == BridgeEventType.SOCKET_CREATED) {
+          logger.info("A socket was created");
+        }
+        seek();
+        event.complete(true);
+      });
     sockJSHandler.socketHandler(sockJSSocket -> {
      // Just echo the data back
       sockJSSocket.handler(sockJSSocket::write);
     });
     // attache the SockJSHandler to the /queue route
     baseRouter.get("/queue").handler(sockJSHandler);
+*/
 
     vertx.createHttpServer()
       .requestHandler(baseRouter::accept)
@@ -94,6 +118,13 @@ public class HttpVerticle extends AbstractVerticle {
         }
       });
     return initHttpServerFuture;
+  }
+
+  private void rootHandler(RoutingContext routingContext) {
+    HttpServerResponse response = routingContext.response();
+    response.putHeader("Content-type", "text/html")
+      .sendFile("/webroot/index.html");
+      //.end("Hello Vert.x!");
   }
 
   /*
@@ -168,9 +199,17 @@ public class HttpVerticle extends AbstractVerticle {
 
   }
 
-  private void rootHandler(RoutingContext routingContext) {
-    HttpServerResponse response = routingContext.response();
-    response.putHeader("content-type", "text/plain").end("Hello Vert.x!");
+  private void seek() {
+    TopicPartition topicPartition = new TopicPartition()
+      .setTopic("test")
+      .setPartition(0);
+
+// seek to a specific offset
+    kafkaConsumer.seek(topicPartition, 10, done -> {
+      if (done.succeeded()) {
+        System.out.println("Seeking done");
+      }
+    });
   }
 
   private Future<Void> sendOrderToKafka(Order order, KafkaQueue kafaQueue){
@@ -203,6 +242,27 @@ public class HttpVerticle extends AbstractVerticle {
     }
 
     return initKafkaProducerFuture;
+  }
+
+  private Future<Void> initKafkaConsumer(){
+    Future<Void> initKafkaConsumerFuture = Future.future();
+
+    Map<String, String> config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+    config.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+    config.put("acks", "1");
+
+    try {
+      kafkaConsumer = KafkaConsumer.create(vertx, config);
+      kafkaConsumer.subscribe("queue");
+      initKafkaConsumerFuture.complete();
+    } catch (Exception e) {
+      initKafkaConsumerFuture.fail(e);
+    }
+
+    return initKafkaConsumerFuture;
+
   }
 
   enum KafkaQueue{

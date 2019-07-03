@@ -35,7 +35,7 @@ public class QueueEndpointTest {
         .as(BodyCodec.string())
         .send(tc.succeeding(resp -> {
           tc.verify(() -> {
-            assertThat(resp.body()).contains("Buffy");
+            assertThat(resp.body()).contains("Welcome to SockJS!");
             assertThat(resp.statusCode()).isEqualTo(200);
             requestCheckpoint.flag();
           });

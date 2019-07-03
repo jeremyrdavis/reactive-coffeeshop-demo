@@ -13,6 +13,11 @@
   </parent>
   <artifactId>vertx-coffeeshop-service</artifactId>
 
+  <properties>
+    <main.verticle>com.redhat.examples.reactive.coffeeshop.MainVerticle</main.verticle>
+  </properties>
+
+
   <dependencies>
     <dependency>
       <groupId>io.vertx</groupId>
@@ -129,6 +134,15 @@
 
 
     </plugins>
+    <resources>
+      <resource>
+        <targetPath>webroot</targetPath>
+        <directory>${basedir}/src/main/webroot</directory>
+        <includes>
+          <include>index.html</include>
+        </includes>
+      </resource>
+    </resources>
   </build>
 
 </project>
