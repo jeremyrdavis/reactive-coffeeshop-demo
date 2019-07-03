@@ -39,10 +39,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/js/patternfly.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vertx/3.6.3/vertx-eventbus.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.3.0/sockjs.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vertx/3.6.3/vertx-eventbus.js"></script>
 <script>
 
+/*
     $(function () {
         var source = new EventSource("http://localhost:8080/queue");
         source.onmessage = function(e) {
@@ -50,6 +51,17 @@
             var state = JSON.parse(e.data);
             $("tbody").append(line(state));
         };
+    });
+ */
+    $(function () {
+      var source = new EventBus("http://localhost:8080/queue");
+      source.onopen = function() {
+        console.log('opened');
+        source.registerHandler("dashboard", function(data){
+          var state = JSON.parse(data);
+          $("tbody").append(line(state));
+        });
+      };
     });
 
     function line(state) {

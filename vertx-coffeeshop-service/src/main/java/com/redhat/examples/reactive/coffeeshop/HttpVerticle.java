@@ -11,6 +11,7 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.WebClient;
@@ -85,7 +86,9 @@ public class HttpVerticle extends AbstractVerticle {
     baseRouter.post("/http").handler(this::httpHandler);
 
     EventBus eventBus = vertx.eventBus();
-    BridgeOptions options = new BridgeOptions();
+    BridgeOptions options = new BridgeOptions()
+      .addInboundPermitted(new PermittedOptions().setAddress("dashboard"))
+      .addOutboundPermitted(new PermittedOptions().setAddress("dashboard"));
     baseRouter.route("/queue/*").handler(SockJSHandler.create(vertx).bridge(options));
 
 /*
