@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-http POST :8080/messaging name=clement product=iced-latte
-http POST :8080/messaging name=edson product=cappuccino
-http POST :8080/messaging name=rafaele product=espresso
-http POST :8080/messaging name=ken product=americano
-http POST :8080/messaging name=emmanuel product=frappucino
+curl -d "name=clement&beverage=iced-latte" http://localhost:8080/messaging
+curl -d "name=edson&beverage=cappuccino" http://localhost:8080/messaging
+curl -d "name=rafaele&beverage=espresso" http://localhost:8080/messaging
+curl -d "name=ken&beverage=americano" http://localhost:8080/messaging
+curl -d "name=emmanuel&beverage=frappucino" http://localhost:8080/messaging
