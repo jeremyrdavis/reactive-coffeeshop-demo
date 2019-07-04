@@ -54,11 +54,16 @@
     });
  */
     $(function () {
-      var source = new EventBus("http://localhost:8080/queue");
-      source.onopen = function() {
+      var eventBus = new EventBus("http://localhost:8080/queue");
+      eventBus.onopen = function() {
         console.log('opened');
-        source.registerHandler("dashboard", function(data){
-          var state = JSON.parse(data);
+        eventBus.registerHandler("dashboard", function(error, data){
+
+          console.log('data:\n' + data.body);
+
+          var state = JSON.parse(data.body);
+          console.log('state:\n' + state);
+
           $("tbody").append(line(state));
         });
       };

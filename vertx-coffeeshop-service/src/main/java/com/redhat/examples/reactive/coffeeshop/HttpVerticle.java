@@ -21,8 +21,11 @@ import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
+import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+import io.vertx.kafka.client.consumer.KafkaConsumerRecords;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,6 +60,16 @@ public class HttpVerticle extends AbstractVerticle {
       }
     });
 
+  }
+
+  private void peek(){
+    // start listening
+    while (true) {
+      kafkaConsumer.poll(200, (asyncResult) -> {
+        logger.debug(asyncResult);
+        vertx.eventBus().send("dashboard", asyncResult);
+      });
+    }
   }
 
   private Future<Void> initWebClient() {
@@ -236,6 +249,7 @@ public class HttpVerticle extends AbstractVerticle {
     config.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     config.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     config.put("acks", "1");
+    config.put(ConsumerConfig.GROUP_ID_CONFIG, "coffeeshop");
 
     try {
       kafkaProducer = KafkaProducer.create(vertx, config);
@@ -255,17 +269,33 @@ public class HttpVerticle extends AbstractVerticle {
     config.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
     config.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
     config.put("acks", "1");
+    config.put(ConsumerConfig.GROUP_ID_CONFIG, "my_group");
 
     try {
       kafkaConsumer = KafkaConsumer.create(vertx, config);
-      kafkaConsumer.subscribe("queue");
+      kafkaConsumer.subscribe("queue", ar ->{
+        if (ar.succeeded()) {
+          System.out.println("subscribed to 'queue'");
+          vertx.setPeriodic(100, timerId -> {
+            kafkaConsumer.poll(200, (asyncResult) -> {
+              KafkaConsumerRecords<String, String> records = asyncResult.result();
+              System.out.println(records);
+              for (int i = 0; i < records.size(); i++) {
+                KafkaConsumerRecord<String, String> record = records.recordAt(i);
+//                System.out.println("key=" + record.key() + ",value=" + record.value() +
+//                  ",partition=" + record.partition() + ",offset=" + record.offset());
+                System.out.println("record.value():" + record.value());
+                vertx.eventBus().send("dashboard", record.value());
+              }
+            });
+          });
+        }
+      });
       initKafkaConsumerFuture.complete();
     } catch (Exception e) {
       initKafkaConsumerFuture.fail(e);
     }
-
     return initKafkaConsumerFuture;
-
   }
 
   enum KafkaQueue{
