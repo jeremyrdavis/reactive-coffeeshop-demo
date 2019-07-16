@@ -14,35 +14,32 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(VertxExtension.class)
-public class OrderTest {
+public class StatusEndpointTest {
+
   private Vertx vertx;
 
   @Test
-  @DisplayName("Order Test")
-  public void testPlacingAnOrder(Vertx vertx, VertxTestContext tc) {
+  @DisplayName("Status Endpoint Test")
+  public void testStatusEndpoint(Vertx vertx, VertxTestContext tc) {
 
     WebClient webClient = WebClient.create(vertx);
     Checkpoint deploymentCheckpoint = tc.checkpoint();
     Checkpoint requestCheckpoint = tc.checkpoint();
 
-    MultiMap form = MultiMap.caseInsensitiveMultiMap();
-    form.set("name", "Buffy");
-    form.set("beverage", "Venti Dark Roast");
-
     vertx.deployVerticle(new MainVerticle(), tc.succeeding(id -> {
 
       deploymentCheckpoint.flag();
 
-      webClient.post(8088, "localhost", "/barista")
-        .sendForm(form, tc.succeeding(resp -> {
+      webClient.get(8088, "localhost", "/queue")
+        .as(BodyCodec.string())
+        .send(tc.succeeding(resp -> {
           tc.verify(() -> {
             assertThat(resp.statusCode()).isEqualTo(200);
             assertThat(resp.bodyAsString()).contains("Buffy");
-            System.out.println(resp.bodyAsString());
             requestCheckpoint.flag();
           });
         }));
     }));
-
   }
+
 }

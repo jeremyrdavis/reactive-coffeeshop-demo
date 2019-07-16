@@ -1,14 +1,18 @@
 package com.redhat.examples.reactive.coffeeshop;
 
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class Order {
 
   private String product;
   private String name;
-  private String orderId;
+  private UUID orderId;
 
   public Order(String product, String name) {
     this.product = product;
     this.name = name;
+    this.orderId = UUID.randomUUID();
   }
 
   public String getProduct() {
@@ -29,12 +33,8 @@ public class Order {
     return this;
   }
 
-  public String getOrderId() {
+  public UUID getOrderId() {
     return orderId;
   }
 
-  public Order setOrderId(String orderId) {
-    this.orderId = orderId;
-    return this;
-  }
 }

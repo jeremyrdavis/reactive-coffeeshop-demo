@@ -14,7 +14,7 @@ public class Beverage {
     public Beverage(Order order, String baristaName) {
       this.beverage = order.getProduct();
       this.customer = order.getName();
-      this.orderId = order.getOrderId();
+      this.orderId = order.getOrderId().toString();
       this.preparedBy = baristaName;
     }
 
@@ -45,12 +45,8 @@ public class Beverage {
       return this;
     }
 
-    public String getOrderId() {
-      return orderId;
-    }
+  public String getOrderId() {
+    return orderId;
+  }
 
-    public Beverage setOrderId(String orderId) {
-      this.orderId = orderId;
-      return this;
-    }
 }

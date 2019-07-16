@@ -14,13 +14,18 @@ import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import org.mvel2.ast.Or;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class HttpBaristaVerticle extends AbstractVerticle{
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpBaristaVerticle.class);
+
+  private Map<Integer, Beverage> products = new LinkedHashMap<>();
 
   private String name;
 
@@ -53,6 +58,7 @@ public class HttpBaristaVerticle extends AbstractVerticle{
     baseRouter.route("/barista*").handler(BodyHandler.create());
     baseRouter.get("/barista").handler(this::baristaHandler);
     baseRouter.post("/barista").handler(this::orderHandler);
+    baseRouter.get("/queue").handler(this::queueHandler);
 
     return vertx.createHttpServer()
       .requestHandler(baseRouter::accept).rxListen(8088).toMaybe();
@@ -68,10 +74,11 @@ public class HttpBaristaVerticle extends AbstractVerticle{
     Observable.zip(
       makeIt(
         new Order(
-          routingContext.request().formAttributes().get("product"),
+          routingContext.request().formAttributes().get("beverage"),
           routingContext.request().formAttributes().get("name"))),
       Observable.interval(random.nextInt(5) * 1000, TimeUnit.MILLISECONDS),
       (obs, timer) -> obs).doOnNext(beverage -> {
+      this.products.put(this.products.size(), beverage);
         HttpServerResponse response = routingContext.response();
         response.putHeader("Content-Type", "application/json").end(Json.encode(beverage));
       }
@@ -91,4 +98,9 @@ public class HttpBaristaVerticle extends AbstractVerticle{
     return Single.just(new Beverage(order, name)).toObservable();
   }
 
+  private void queueHandler(RoutingContext routingContext) {
+    routingContext.response()
+      .putHeader("content-type", "application/json; charset=utf-8")
+      .end(Json.encodePrettily(products.values()));
+  }
 }
