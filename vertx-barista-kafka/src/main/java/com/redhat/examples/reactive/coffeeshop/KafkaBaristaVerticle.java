@@ -70,6 +70,7 @@ public class KafkaBaristaVerticle extends AbstractVerticle {
       kafkaConsumer = KafkaConsumer.create(vertx, kafkaConfig);
       kafkaConsumer.handler(record -> {
         System.out.println("Order Received " + Json.encodePrettily(record));
+        System.out.println("Order Will be processed by " + this.name);
       });
       kafkaConsumer.subscribe(ORDER_TOPIC, ar ->{
         if (ar.succeeded()) {

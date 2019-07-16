@@ -55,7 +55,7 @@ public class HttpBaristaVerticle extends AbstractVerticle{
     baseRouter.post("/barista").handler(this::orderHandler);
 
     return vertx.createHttpServer()
-      .requestHandler(baseRouter::accept).rxListen().toMaybe();
+      .requestHandler(baseRouter::accept).rxListen(8088).toMaybe();
   }
 
   /*
