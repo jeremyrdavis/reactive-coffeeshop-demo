@@ -70,9 +70,9 @@
     });
 
     function line(state) {
-        var id = state.order.orderId;
-        var product = state.order.product;
-        var customer = state.order.name;
+        var id = state.orderId;
+        var product = state.product;
+        var customer = state.name;
         var barista = "";
         if (state.beverage) {
             barista = state.beverage.preparedBy;
