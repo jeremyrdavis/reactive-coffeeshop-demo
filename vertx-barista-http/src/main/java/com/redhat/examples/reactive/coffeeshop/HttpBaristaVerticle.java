@@ -14,7 +14,6 @@ import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
-import org.mvel2.ast.Or;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -68,14 +67,12 @@ public class HttpBaristaVerticle extends AbstractVerticle{
     Handler for posting an order
    */
   private void orderHandler(RoutingContext routingContext) {
-
-    LOG.debug("orderHandler called with " + routingContext.getBody());
-
+    System.out.println("orderHandler called with " + routingContext.getBody());
     Observable.zip(
       makeIt(
         new Order(
-          routingContext.request().formAttributes().get("beverage"),
-          routingContext.request().formAttributes().get("name"))),
+          routingContext.getBodyAsJson().getString("beverage"),
+          routingContext.getBodyAsJson().getString("name"))),
       Observable.interval(random.nextInt(5) * 1000, TimeUnit.MILLISECONDS),
       (obs, timer) -> obs).doOnNext(beverage -> {
       this.products.put(this.products.size(), beverage);

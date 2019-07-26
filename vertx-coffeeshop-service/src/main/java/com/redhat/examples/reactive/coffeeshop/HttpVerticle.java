@@ -230,6 +230,7 @@ public class HttpVerticle extends AbstractVerticle {
 
   private Future<Void> sendOrderToKafka(Order order, KafkaQueue kafaQueue){
     Future<Void> sendFuture = Future.future();
+    System.out.println("sendOrderToKafka:" + Json.encodePrettily(order));
     KafkaProducerRecord<String, String> record = KafkaProducerRecord.create(kafaQueue.name, Json.encodePrettily(order));
     kafkaProducer.write(record, ar -> {
       if (ar.failed()) {
@@ -279,7 +280,7 @@ public class HttpVerticle extends AbstractVerticle {
           vertx.setPeriodic(100, timerId -> {
             kafkaConsumer.poll(200, (asyncResult) -> {
               KafkaConsumerRecords<String, String> records = asyncResult.result();
-              System.out.println(records);
+//              System.out.println(records);
               for (int i = 0; i < records.size(); i++) {
                 KafkaConsumerRecord<String, String> record = records.recordAt(i);
 //                System.out.println("key=" + record.key() + ",value=" + record.value() +

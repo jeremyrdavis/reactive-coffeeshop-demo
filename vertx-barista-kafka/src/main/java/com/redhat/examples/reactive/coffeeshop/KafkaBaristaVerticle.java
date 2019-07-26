@@ -4,11 +4,15 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.reactivex.core.AbstractVerticle;
-import io.vertx.reactivex.kafka.client.consumer.KafkaConsumer;
+import io.vertx.kafka.client.producer.KafkaProducer;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.kafka.client.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +25,8 @@ public class KafkaBaristaVerticle extends AbstractVerticle {
   private static final String ORDER_TOPIC = "orders";
 
   private KafkaConsumer<String, String> kafkaConsumer;
+
+  private KafkaProducer<String, String> kafkaProducer;
 
   private String name;
 
@@ -69,8 +75,11 @@ public class KafkaBaristaVerticle extends AbstractVerticle {
       });
       kafkaConsumer = KafkaConsumer.create(vertx, kafkaConfig);
       kafkaConsumer.handler(record -> {
-        System.out.println("Order Received " + Json.encodePrettily(record));
+        System.out.println(record.value());
+        Order order = Json.decodeValue(record.value(), Order.class);
+        System.out.println("Order:" + order);
         System.out.println("Order Will be processed by " + this.name);
+
       });
       kafkaConsumer.subscribe(ORDER_TOPIC, ar ->{
         if (ar.succeeded()) {
@@ -81,5 +90,26 @@ public class KafkaBaristaVerticle extends AbstractVerticle {
       });
     }).toObservable();
   }
+
+  private Future<Void> initKafkaProducer() {
+    Future<Void> initKafkaProducerFuture = Future.future();
+
+    Map<String, String> config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    config.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    config.put("acks", "1");
+    config.put(ConsumerConfig.GROUP_ID_CONFIG, "coffeeshop");
+
+    try {
+      kafkaProducer = KafkaProducer.create((Vertx) vertx, config);
+      initKafkaProducerFuture.complete();
+    } catch (Exception e) {
+      initKafkaProducerFuture.fail(e);
+    }
+
+    return initKafkaProducerFuture;
+  }
+
 
 }
