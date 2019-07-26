@@ -2,6 +2,7 @@ package com.redhat.examples.reactive.coffeeshop;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.junit5.Checkpoint;
@@ -25,18 +26,17 @@ public class OrderTest {
     Checkpoint deploymentCheckpoint = tc.checkpoint();
     Checkpoint requestCheckpoint = tc.checkpoint();
 
-    MultiMap form = MultiMap.caseInsensitiveMultiMap();
-    form.set("name", "Buffy");
-    form.set("beverage", "Venti Dark Roast");
+    JsonObject payload = new JsonObject().put("name", "Buffy").put("beverage", "latte");
 
     vertx.deployVerticle(new MainVerticle(), tc.succeeding(id -> {
 
       deploymentCheckpoint.flag();
 
       webClient.post(8088, "localhost", "/barista")
-        .sendForm(form, tc.succeeding(resp -> {
+        .sendJsonObject(payload, tc.succeeding(resp -> {
           tc.verify(() -> {
             assertThat(resp.statusCode()).isEqualTo(200);
+            assertThat(resp.getHeader("Content-Type").equals("application/json"));
             assertThat(resp.bodyAsString()).contains("Buffy");
             System.out.println(resp.bodyAsString());
             requestCheckpoint.flag();
