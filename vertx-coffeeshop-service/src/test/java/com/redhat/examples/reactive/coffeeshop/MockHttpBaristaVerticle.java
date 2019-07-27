@@ -1,12 +1,11 @@
 package com.redhat.examples.reactive.coffeeshop;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.core.http.HttpServerResponse;
 
 public class MockHttpBaristaVerticle extends AbstractVerticle {
 
@@ -20,6 +19,7 @@ public class MockHttpBaristaVerticle extends AbstractVerticle {
     vertx.createHttpServer()
       .requestHandler(router::accept)
       .listen(8082, result -> {
+        System.out.println("MockHttpBaristaVerticle deployed");
         if (result.failed()) {
           throw new RuntimeException(result.cause());
         }
@@ -28,20 +28,20 @@ public class MockHttpBaristaVerticle extends AbstractVerticle {
   }
 
   private void mockHandler(RoutingContext routingContext) {
-    String product = routingContext.request().formAttributes().get("product");
-    String name = routingContext.request().formAttributes().get("name");
 
-    if(name == null) throw new RuntimeException("'name' is null");
-    if(!(name.equals("Buffy"))) throw new RuntimeException("'name' does not equal 'Buffy'");
-    if(product == null) throw new RuntimeException("'product' is null");
-    if(!(product.equals("Venti Dark Roast"))) throw new RuntimeException("'product' does not equal 'Venti Dark Roast'");
+    JsonObject payload = routingContext.getBodyAsJson();
+
+    System.out.println("MockHttpBaristaVerticle");
+    System.out.println(payload.getString("name"));
+    System.out.println(payload.getString("product"));
+
+    if(payload.getString("name") == null) throw new RuntimeException("'name' is null");
+    if(payload.getString("product") == null) throw new RuntimeException("'product' is null");
 
     // if everything was sent correctly return the expected response
     HttpServerResponse response = routingContext.response();
     response.putHeader("Content-type", "application/json")
-      .end(new JsonObject()
-      .put("name", name)
-      .put("beverage", product).encode());
+      .end(payload.encode());
   }
 
 }

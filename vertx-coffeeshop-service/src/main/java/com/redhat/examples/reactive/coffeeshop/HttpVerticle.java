@@ -152,16 +152,17 @@ public class HttpVerticle extends AbstractVerticle {
   private void httpHandler(RoutingContext routingContext) {
     JsonObject requestJson = routingContext.getBodyAsJson();
 
+    System.out.println("Coffeshop Service httpHandler");
     System.out.println(requestJson.getString("name"));
     System.out.println(requestJson.getString("product"));
 
-    MultiMap form = MultiMap.caseInsensitiveMultiMap();
-    form.set("name", requestJson.getString("name"));
-    form.set("product", requestJson.getString("product"));
+    JsonObject payload = new JsonObject()
+      .put("name", requestJson.getString("name"))
+      .put("product", requestJson.getString("product"));
 
     webClient.post(8082, "localhost", "/barista")
       .putHeader("Accept", "application/json")
-      .sendForm(form, ar -> {
+      .sendJsonObject(payload, ar -> {
         if (ar.succeeded()) {
           HttpServerResponse response = routingContext.response();
           response.setStatusCode(200);

@@ -1,45 +1,25 @@
 package com.redhat.examples.reactive.coffeeshop;
 
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(VertxExtension.class)
-public class HttpEndpointTest {
-
-/*
-  @BeforeAll
-  public static void setUp(Vertx vertx, VertxTestContext tc) {
-
-    // deploy our mock verticle
-    vertx.deployVerticle(new MockHttpBaristaVerticle(), tc.completing());
-  }
-
-  @AfterAll
-  public static void tearDown(Vertx vertx, VertxTestContext tc) {
-
-    assertThat(vertx.deploymentIDs())
-      .isNotEmpty()
-      .hasSize(2);
-  }
-*/
+public class MessagingEndpointTest {
 
   @Test
-  @DisplayName("Test Http Endpoint")
+  @DisplayName("Test Messaging Endpoint")
   public void testHttpEndpoint(Vertx vertx, VertxTestContext tc) {
 
-    vertx.deployVerticle(MockHttpBaristaVerticle.class.getName());
+    vertx.deployVerticle(MockKafkaVerticle.class.getName());
 
     Checkpoint deploymentCheckpoint = tc.checkpoint();
     Checkpoint requestCheckpoint = tc.checkpoint();
@@ -56,7 +36,7 @@ public class HttpEndpointTest {
       System.out.println("HttpVerticle deployed");
       deploymentCheckpoint.flag();
 
-      webClient.post(8080, "localhost", "/http")
+      webClient.post(8080, "localhost", "/messaging")
         .sendJsonObject(testPayload, tc.succeeding(resp -> {
           System.out.println("resp:" + resp.bodyAsString());
           tc.verify(() -> {
@@ -70,4 +50,3 @@ public class HttpEndpointTest {
     }));
   }
 }
-
