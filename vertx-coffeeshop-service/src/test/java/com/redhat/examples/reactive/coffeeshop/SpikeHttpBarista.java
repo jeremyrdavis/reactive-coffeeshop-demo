@@ -3,18 +3,14 @@ package com.redhat.examples.reactive.coffeeshop;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
-import io.vertx.ext.web.handler.sockjs.BridgeOptions;
-import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 
 public class SpikeHttpBarista extends AbstractVerticle {
 
@@ -34,7 +30,6 @@ public class SpikeHttpBarista extends AbstractVerticle {
     });
 
   }
-
 
   private Future<Void> initWebClient() {
     Future<Void> initWebClientFuture = Future.future();
@@ -80,9 +75,8 @@ public class SpikeHttpBarista extends AbstractVerticle {
 
     JsonObject payload = new JsonObject()
       .put("name", requestJson.getString("name"))
-      .put("product", requestJson.getString("product"));
-
-    payload.put("action", "order-received");
+      .put("product", requestJson.getString("product"))
+      .put("action", "order-received");
 
     vertx.<JsonObject>eventBus().send("kafka-address", payload, ar -> {
 
@@ -91,7 +85,7 @@ public class SpikeHttpBarista extends AbstractVerticle {
           .setStatusCode(200)
           .putHeader("Content-Type", "application/json; charset=utf-8")
           .end(Json.encodePrettily(payload));
-      }else{
+      } else {
         routingContext.response()
           .setStatusCode(500)
           .putHeader("Content-Type", "application/json; charset=utf-8")
@@ -118,7 +112,7 @@ public class SpikeHttpBarista extends AbstractVerticle {
           HttpServerResponse response = routingContext.response();
           response.setStatusCode(200);
           response.putHeader("Content-type", "application/json").end(ar.result().bodyAsJsonObject().encode());
-        }else{
+        } else {
           HttpServerResponse response = routingContext.response();
           response.setStatusCode(500);
           response.end();

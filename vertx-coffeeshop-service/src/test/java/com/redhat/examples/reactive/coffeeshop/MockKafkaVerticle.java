@@ -7,7 +7,16 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 public class MockKafkaVerticle extends AbstractVerticle {
+
+  JsonObject expectedMessage;
+
+  public MockKafkaVerticle(JsonObject expectedMessage) {
+
+    this.expectedMessage = expectedMessage;
+  }
 
   @Override
   public void start(Future<Void> startFuture) {
@@ -33,6 +42,7 @@ public class MockKafkaVerticle extends AbstractVerticle {
   }
 
   private void orderReceived(Message<JsonObject> message) {
+    assertThat(message.body()).isEqualTo(expectedMessage);
     message.reply(new JsonObject().put("result", "success"));
   }
 }

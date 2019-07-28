@@ -6,8 +6,7 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,9 +16,14 @@ public class MessagingEndpointTest {
 
   @Test
   @DisplayName("Test Messaging Endpoint")
-  public void testHttpEndpoint(Vertx vertx, VertxTestContext tc) {
+  public void testMessagingEndpoint(Vertx vertx, VertxTestContext tc) {
 
-    vertx.deployVerticle(MockKafkaVerticle.class.getName());
+    JsonObject expectedMessage = new JsonObject()
+      .put("name", "Buffy")
+      .put("product", "Venti Dark Roast")
+      .put("action", "order-received");
+
+    vertx.deployVerticle(new MockKafkaVerticle(expectedMessage), tc.completing());
 
     Checkpoint deploymentCheckpoint = tc.checkpoint();
     Checkpoint requestCheckpoint = tc.checkpoint();
@@ -33,7 +37,7 @@ public class MessagingEndpointTest {
 
     vertx.deployVerticle(new SpikeHttpBarista(), tc.succeeding(id -> {
 
-      System.out.println("HttpVerticle deployed");
+      System.out.println("SpikeHttpBarista deployed");
       deploymentCheckpoint.flag();
 
       webClient.post(8080, "localhost", "/messaging")
@@ -44,7 +48,6 @@ public class MessagingEndpointTest {
             assertThat(resp.statusCode()).isEqualTo(200);
             assertThat(resp.bodyAsString()).contains("Buffy");
             requestCheckpoint.flag();
-
           });
         }));
     }));
