@@ -13,7 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(VertxExtension.class)
-public class BoardVerticleUnitTest {
+public class DashboardVerticleUnitTest {
 
   private Vertx vertx;
 
