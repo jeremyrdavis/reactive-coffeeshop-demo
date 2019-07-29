@@ -6,11 +6,14 @@ import io.vertx.core.Future;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
+import io.vertx.ext.web.handler.sockjs.BridgeOptions;
+import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 
 public class SpikeHttpBarista extends AbstractVerticle {
 
@@ -46,6 +49,13 @@ public class SpikeHttpBarista extends AbstractVerticle {
 
     Future<Void> initHttpServerFuture = Future.future();
 
+    SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
+
+    BridgeOptions options = new BridgeOptions()
+      .addInboundPermitted(new PermittedOptions().setAddress("dashboard"))
+      .addOutboundPermitted(new PermittedOptions().setAddress("dashboard"));
+    sockJSHandler.bridge(options);
+
     // initialize the router
     Router baseRouter = Router.router(vertx);
     baseRouter.get("/*").handler(StaticHandler.create());
@@ -53,6 +63,7 @@ public class SpikeHttpBarista extends AbstractVerticle {
     baseRouter.post("/http").handler(this::httpHandler);
     baseRouter.route("/messaging").handler(BodyHandler.create());
     baseRouter.post("/messaging").handler(this::messagingHandler);
+    baseRouter.route("/queue/*").handler(sockJSHandler);
 
     vertx.createHttpServer()
       .requestHandler(baseRouter::accept)
@@ -105,14 +116,29 @@ public class SpikeHttpBarista extends AbstractVerticle {
       .put("name", requestJson.getString("name"))
       .put("product", requestJson.getString("product"));
 
-    webClient.post(8082, "localhost", "/barista")
+
+      webClient.post(8088, "localhost", "/barista")
       .putHeader("Accept", "application/json")
       .sendJsonObject(payload, ar -> {
+
         if (ar.succeeded()) {
+/*
+          webClient.post(8080,"localhost", "/queue")
+            .sendJsonObject(payload, res -> {
+              System.out.println(res);
+              if (res.succeeded()) {
+                System.out.println("sent to queue");
+              }else {
+                System.out.println(res.cause());
+              }
+            });
+*/
+          System.out.println("cause: " + ar.cause());
           HttpServerResponse response = routingContext.response();
           response.setStatusCode(200);
           response.putHeader("Content-type", "application/json").end(ar.result().bodyAsJsonObject().encode());
         } else {
+          System.out.println("cause: " + ar.cause());
           HttpServerResponse response = routingContext.response();
           response.setStatusCode(500);
           response.end();
