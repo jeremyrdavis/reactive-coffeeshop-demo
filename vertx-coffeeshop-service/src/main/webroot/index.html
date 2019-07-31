@@ -59,9 +59,10 @@
         console.log('opened');
         eventBus.registerHandler("dashboard", function(error, data){
 
-          console.log('data:\n' + data.body);
+          var state = data.body;
+          console.log('data:\n' + state.toString());
 
-          var state = JSON.parse(data.body);
+
           console.log('state:\n' + state);
 
           $("tbody").append(line(state));

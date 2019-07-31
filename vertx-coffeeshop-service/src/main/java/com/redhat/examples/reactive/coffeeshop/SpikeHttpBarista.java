@@ -114,26 +114,25 @@ public class SpikeHttpBarista extends AbstractVerticle {
 
     JsonObject payload = new JsonObject()
       .put("name", requestJson.getString("name"))
-      .put("product", requestJson.getString("product"));
-
+      .put("beverage", requestJson.getString("product"));
 
       webClient.post(8088, "localhost", "/barista")
       .putHeader("Accept", "application/json")
       .sendJsonObject(payload, ar -> {
 
         if (ar.succeeded()) {
-/*
-          webClient.post(8080,"localhost", "/queue")
-            .sendJsonObject(payload, res -> {
-              System.out.println(res);
-              if (res.succeeded()) {
-                System.out.println("sent to queue");
-              }else {
-                System.out.println(res.cause());
-              }
-            });
-*/
-          System.out.println("cause: " + ar.cause());
+
+          JsonObject result = ar.result().bodyAsJsonObject();
+
+          JsonObject dashboard = new JsonObject()
+              .put("beverage", result.getString("beverage"))
+              .put("customer", result.getString("customer"))
+              .put("preparedBy", result.getString("preparedBy"))
+              .put("orderId", result.getString("orderId"));
+
+          System.out.println("sending to dashboard" + dashboard.encode());
+          vertx.eventBus().send("dashboard", dashboard);
+
           HttpServerResponse response = routingContext.response();
           response.setStatusCode(200);
           response.putHeader("Content-type", "application/json").end(ar.result().bodyAsJsonObject().encode());
