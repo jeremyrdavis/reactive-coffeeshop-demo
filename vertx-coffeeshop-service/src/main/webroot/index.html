@@ -59,31 +59,31 @@
         console.log('opened');
         eventBus.registerHandler("dashboard", function(error, data){
 
-          var state = data.body;
-          console.log('data:\n' + state.toString());
+          var order = data.body;
+          console.log('data:\n' + order.toString());
 
 
-          console.log('state:\n' + state);
+          console.log('state:\n' + order);
 
-          $("tbody").append(line(state));
+          $("tbody").append(line(order));
         });
       };
     });
 
-    function line(state) {
-        var id = state.orderId;
-        var product = state.product;
-        var customer = state.name;
-        var barista = "";
-        if (state.beverage) {
-            barista = state.beverage.preparedBy;
+    function line(order) {
+        var id = order.orderId;
+        var product = order.beverage;
+        var customer = order.customer;
+        var barista = order.preparedBy;
+        if (order.state) {
+            state = order.state;
         }
         return "<tr>" +
             "<td>" + id + "</td>" +
             "<td>" + product + "</td>" +
             "<td>" + customer + "</td>" +
             "<td>" + barista + "</td>" +
-            "<td>" + state.state + "</td></tr>";
+            "<td>" + order.state + "</td></tr>";
     }
 
 
