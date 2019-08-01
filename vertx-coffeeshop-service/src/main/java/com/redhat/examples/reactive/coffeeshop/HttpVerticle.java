@@ -180,10 +180,7 @@ public class HttpVerticle extends AbstractVerticle {
 
   private void messagingHandler(RoutingContext routingContext) {
 
-    Order order = new Order(
-      routingContext.request().formAttributes().get("beverage"),
-      routingContext.request().formAttributes().get("name"));
-    order.setOrderId(UUID.randomUUID().toString());
+    Order order = Json.decodeValue(routingContext.getBody(), Order.class);
 
     System.out.println(Json.encodePrettily(order));
 

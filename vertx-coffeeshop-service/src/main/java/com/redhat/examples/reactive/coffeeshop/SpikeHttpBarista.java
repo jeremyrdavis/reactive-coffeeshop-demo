@@ -1,5 +1,6 @@
 package com.redhat.examples.reactive.coffeeshop;
 
+import com.redhat.examples.reactive.coffeeshop.model.Order;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -92,6 +93,7 @@ public class SpikeHttpBarista extends AbstractVerticle {
     vertx.<JsonObject>eventBus().send("kafka-address", payload, ar -> {
 
       if (ar.succeeded()) {
+        vertx.eventBus().send("dashboard", payload);
         routingContext.response()
           .setStatusCode(200)
           .putHeader("Content-Type", "application/json; charset=utf-8")
@@ -106,29 +108,25 @@ public class SpikeHttpBarista extends AbstractVerticle {
   }
 
   private void httpHandler(RoutingContext routingContext) {
-    JsonObject requestJson = routingContext.getBodyAsJson();
 
     System.out.println("Coffeshop Service httpHandler");
-    System.out.println(requestJson.getString("name"));
-    System.out.println(requestJson.getString("product"));
+    Order order = Json.decodeValue(routingContext.getBody(), Order.class);
 
-    JsonObject payload = new JsonObject()
-      .put("name", requestJson.getString("name"))
-      .put("beverage", requestJson.getString("product"));
+    System.out.println(order.toString());
 
-      webClient.post(8088, "localhost", "/barista")
+    webClient.post(8088, "localhost", "/barista")
       .putHeader("Accept", "application/json")
-      .sendJsonObject(payload, ar -> {
+      .sendJsonObject(order.toJsonObject(), ar -> {
 
         if (ar.succeeded()) {
 
           JsonObject result = ar.result().bodyAsJsonObject();
 
           JsonObject dashboard = new JsonObject()
-              .put("beverage", result.getString("beverage"))
-              .put("customer", result.getString("customer"))
-              .put("preparedBy", result.getString("preparedBy"))
-              .put("orderId", result.getString("orderId"));
+            .put("beverage", result.getString("beverage"))
+            .put("customer", result.getString("customer"))
+            .put("preparedBy", result.getString("preparedBy"))
+            .put("orderId", result.getString("orderId"));
 
           System.out.println("sending to dashboard" + dashboard.encode());
           vertx.eventBus().send("dashboard", dashboard);

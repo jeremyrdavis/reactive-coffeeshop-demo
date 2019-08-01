@@ -1,7 +1,9 @@
 package com.redhat.examples.reactive.coffeeshop;
 
+import com.redhat.examples.reactive.coffeeshop.model.Order;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -18,7 +20,7 @@ public class MockHttpBaristaVerticle extends AbstractVerticle {
 
     vertx.createHttpServer()
       .requestHandler(router::accept)
-      .listen(8082, result -> {
+      .listen(8088, result -> {
         System.out.println("MockHttpBaristaVerticle deployed");
         if (result.failed()) {
           throw new RuntimeException(result.cause());
@@ -31,12 +33,13 @@ public class MockHttpBaristaVerticle extends AbstractVerticle {
 
     JsonObject payload = routingContext.getBodyAsJson();
 
-    System.out.println("MockHttpBaristaVerticle");
-    System.out.println(payload.getString("name"));
-    System.out.println(payload.getString("product"));
+    Order order = Json.decodeValue(routingContext.getBody(), Order.class);
 
-    if(payload.getString("name") == null) throw new RuntimeException("'name' is null");
-    if(payload.getString("product") == null) throw new RuntimeException("'product' is null");
+    System.out.println("MockHttpBaristaVerticle");
+    System.out.println(order);
+
+    if(order.getName() == null) throw new RuntimeException("'name' is null");
+    if(order.getProduct() == null) throw new RuntimeException("'product' is null");
 
     // if everything was sent correctly return the expected response
     HttpServerResponse response = routingContext.response();

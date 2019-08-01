@@ -5,7 +5,6 @@ public class Beverage {
   private String beverage;
   private String customer;
   private String preparedBy;
-  private String orderId;
 
 
   public Beverage() {
@@ -15,7 +14,6 @@ public class Beverage {
   public Beverage(Order order, String baristaName) {
     this.beverage = order.getProduct();
     this.customer = order.getName();
-    this.orderId = order.getOrderId();
     this.preparedBy = baristaName;
   }
 
@@ -46,12 +44,4 @@ public class Beverage {
     return this;
   }
 
-  public String getOrderId() {
-    return orderId;
-  }
-
-  public Beverage setOrderId(String orderId) {
-    this.orderId = orderId;
-    return this;
-  }
 }
