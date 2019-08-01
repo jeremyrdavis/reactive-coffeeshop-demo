@@ -9,7 +9,7 @@ public class MainVerticle extends AbstractVerticle {
   @Override
   public void start(Future<Void> startFuture) {
 
-    deployVerticle(SpikeHttpBarista.class.getName())
+    deployVerticle(HttpVerticle.class.getName())
       .flatMap(id -> deployVerticle(KafkaVerticle.class.getName()))
       .subscribe(id -> startFuture.complete(), startFuture::fail);
   }

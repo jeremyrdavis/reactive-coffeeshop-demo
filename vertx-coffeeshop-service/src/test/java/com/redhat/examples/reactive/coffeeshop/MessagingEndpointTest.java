@@ -35,7 +35,7 @@ public class MessagingEndpointTest {
       .put("name", "Buffy")
       .put("product", "Venti Dark Roast");
 
-    vertx.deployVerticle(new SpikeHttpBarista(), tc.succeeding(id -> {
+    vertx.deployVerticle(new HttpVerticle(), tc.succeeding(id -> {
 
       System.out.println("SpikeHttpBarista deployed");
       deploymentCheckpoint.flag();
