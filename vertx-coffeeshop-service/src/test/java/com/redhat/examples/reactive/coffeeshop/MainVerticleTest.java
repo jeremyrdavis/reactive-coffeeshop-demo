@@ -36,7 +36,7 @@ public class MainVerticleTest {
         .as(BodyCodec.string())
         .send(tc.succeeding(resp -> {
           tc.verify(() -> {
-            assertThat(resp.body()).contains("Hello Vert.x!");
+            assertThat(resp.body()).contains("Coffee Queue");
             assertThat(resp.statusCode()).isEqualTo(200);
             requestCheckpoint.flag();
           });
